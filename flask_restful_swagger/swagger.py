@@ -2,6 +2,7 @@ import functools
 import inspect
 import os
 import re
+import mimetypes
 
 try:
     # urlparse is renamed to urllib.parse in python 3
@@ -228,21 +229,14 @@ class StaticFiles(Resource):
             conf = {'resource_list_url': req_registry['spec_endpoint_path']}
             return render_page(filePath, conf)
 
-        # TODO: replace with mimetype.types_map
-        mime = 'text/plain'
-        if filePath.endswith(".gif"):
-            mime = 'image/gif'
-        elif filePath.endswith(".png"):
-            mime = 'image/png'
-        elif filePath.endswith(".js"):
-            mime = 'text/javascript'
-        elif filePath.endswith(".css"):
-            mime = 'text/css'
+        # review: replace with mimetypes
+        mimetypes.init()
+        mime = mimetypes.guess_type(filePath)
 
         file_path = os.path.join(rootPath, 'static', filePath)
         if os.path.exists(file_path):
-            fs = open(file_path, "rb")  # TODO: add with statement
-            return Response(fs, mimetype=mime)
+            with open(file_path, "rb") as fs: # review: add with statement
+                return Response(fs, mimetype=mime)
         abort(404)
 
 

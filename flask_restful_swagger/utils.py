@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 
 import functools
-import warnings
-import re
 import inspect
+import re
+import warnings
 
 __author__ = 'sobolevn'
 
@@ -46,7 +46,7 @@ def _parse_doc(obj):
         line_feed = full_doc.find('\n')
         if line_feed != -1:
             first_line = _sanitize_doc(full_doc[:line_feed])
-            other_lines = _sanitize_doc(full_doc[line_feed+1:])
+            other_lines = _sanitize_doc(full_doc[line_feed + 1:])
         else:
             first_line = full_doc
 

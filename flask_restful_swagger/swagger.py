@@ -4,11 +4,11 @@ from __future__ import absolute_import
 
 import importlib
 import os
+from collections import OrderedDict
 
 import six
 from flask import Blueprint
 from flask_restful import Api
-
 from flask_restful_swagger import swagger_definitions
 from flask_restful_swagger.producers import (
     JsonResourceListingProducer,
@@ -22,7 +22,6 @@ __author__ = 'sobolevn'
 DEFAULTS_META_VALUES = {
 }
 DEFAULTS_LISTING_META_VALUES = {
-    'apiVersion': '0.0.1',
     'swaggerVersion': '1.2',
 }
 
@@ -50,7 +49,7 @@ class SwaggerDocs(object):
             self.definitions = importlib.import_module(
                 import_path
             )
-        except ImportError:
+        except ImportError as e:
             raise ValueError('No such swagger version: ' + version)
 
     @staticmethod
@@ -74,7 +73,9 @@ class SwaggerDocs(object):
         self.definitions = None
         # This will set `self.definitions` to the appropriate module:
         swagger_version = swagger_listing_meta.pop('swagger', None)
-        if not swagger_version:
+        if swagger_version:
+            swagger_listing_meta.pop('swaggerVersion', None)
+        else:
             swagger_version = swagger_listing_meta.pop('swaggerVersion', None)
         self._import_required_version(swagger_version)
         self.swagger_meta = self.definitions.SwaggerMeta()
@@ -87,6 +88,7 @@ class SwaggerDocs(object):
         self.operations = []
         self.models = []
         self.resources = {}
+        self.tags = OrderedDict()
 
         self.api_spec_url = api_spec_url
         self.static_url_path = static_url_path or ''
@@ -141,6 +143,9 @@ class SwaggerDocs(object):
         self.api.add_resource(resource, url, **kwargs)
         self.resources.update({resource.endpoint: swagger_resource})
 
+    def add_tag(self, name, order, description, **kwargs):
+        self.tags.update({order: self.definitions.SwaggerTag(name, order, description)})
+
     def resource(self, **kwargs):
         def _inner(resource_class):
             resource_class.swagger_attr = kwargs
@@ -150,8 +155,8 @@ class SwaggerDocs(object):
 
     def operation(self, *args, **kwargs):
         def _inner(func):
-            operation = self.definitions.SwaggerOperation(
-                *args, **kwargs)
+            operation = self.definitions.SwaggerOperation(*args, **kwargs)
+            func.swagger_operation = operation
             func.operation = operation
             return func
 

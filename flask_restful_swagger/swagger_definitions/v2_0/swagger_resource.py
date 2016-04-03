@@ -11,6 +11,15 @@ from flask_restful_swagger.utils import (
 __author__ = 'gdoumenc'
 
 
+class SwaggerTag(SwaggerDefinition):
+    def __init__(self, name, order, description):
+        self.name = name
+        self.description = description
+
+    def render(self):
+        return dict(name=self.name, description=self.description)
+
+
 class SwaggerResource(SwaggerDefinition):
     def __init__(self, resource, url=None):
         self.orig = resource
@@ -18,30 +27,18 @@ class SwaggerResource(SwaggerDefinition):
         self.swagger_url = extract_swagger_path(url)
         self.listing_path = '/' + url.split('/')[1]
 
-    def render_listing(self):
-        return {
-            'path': self.listing_path,
-            'description': '',
-        }
-
-    def _render_operations(self, operations):
-        result = []
+    @staticmethod
+    def _render_operations(operations):
+        result = {}
         for operation in operations:
             for k, v in operation.items():
-                rendered = v.render()
-                rendered.update({'method': k})
-                result.append(rendered)
+                result[k] = v.render()
 
         return result
 
     def render(self):
         operations = extract_operations(self)
-        result = self.orig.swagger_attr
-
-        result['apis'] = []
-        result['apis'].append({
-            'path': self.swagger_url,
-            'operations': self._render_operations(operations),
+        result = dict({
+            self.url: self._render_operations(operations),
         })
-
         return result

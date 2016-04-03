@@ -2,24 +2,29 @@
 
 from __future__ import absolute_import
 
-import six
-import os
-import mimetypes
 import importlib
+import os
 
+import six
 from flask import Blueprint
 from flask_restful import Api
 
+from flask_restful_swagger import swagger_definitions
 from flask_restful_swagger.producers import (
     JsonResourceListingProducer,
     JsonResourceProducer,
     HtmlProducer,
     BaseProducer,
 )
-from flask_restful_swagger import swagger_definitions
-
 
 __author__ = 'sobolevn'
+
+DEFAULTS_META_VALUES = {
+}
+DEFAULTS_LISTING_META_VALUES = {
+    'apiVersion': '0.0.1',
+    'swaggerVersion': '1.2',
+}
 
 
 class SwaggerDocs(object):
@@ -48,12 +53,8 @@ class SwaggerDocs(object):
         except ImportError:
             raise ValueError('No such swagger version: ' + version)
 
-    def _set_default_meta_values(self, values):
-        defaults_values = {
-            'apiVersion': '0.0.1',
-            'swaggerVersion': '1.2',
-        }
-
+    @staticmethod
+    def _set_default_values(values, defaults_values):
         for k, v in six.iteritems(defaults_values):
             values.setdefault(k, v)
 
@@ -66,14 +67,16 @@ class SwaggerDocs(object):
 
         self.api = api
         self.swagger_meta = swagger_meta
+        self._set_default_values(self.swagger_meta, DEFAULTS_META_VALUES)
         self.swagger_listing_meta = swagger_listing_meta
-        self._set_default_meta_values(self.swagger_listing_meta)
-        self._set_default_meta_values(self.swagger_meta)
+        self._set_default_values(self.swagger_listing_meta, DEFAULTS_LISTING_META_VALUES)
 
         self.definitions = None
         # This will set `self.definitions` to the appropriate module:
-        self._import_required_version(
-            swagger_listing_meta['swaggerVersion'])
+        swagger_version = swagger_listing_meta.pop('swagger', None)
+        if not swagger_version:
+            swagger_version = swagger_listing_meta.pop('swaggerVersion', None)
+        self._import_required_version(swagger_version)
         self.swagger_meta = self.definitions.SwaggerMeta()
         self.swagger_listing_meta = self.definitions.SwaggerListingMeta(
             self.swagger_listing_meta
@@ -142,6 +145,7 @@ class SwaggerDocs(object):
         def _inner(resource_class):
             resource_class.swagger_attr = kwargs
             return resource_class
+
         return _inner
 
     def operation(self, *args, **kwargs):

@@ -55,8 +55,7 @@ class SwaggerDocs(object):
         }
 
         for k, v in six.iteritems(defaults_values):
-            if k not in values or not values[k]:
-                values[k] = v
+            values.setdefault(k, v)
 
     def __init__(self, api, swagger_meta=None, swagger_listing_meta=None,
                  api_spec_url='/api/spec', template_folder=None,

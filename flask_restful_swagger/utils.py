@@ -55,9 +55,10 @@ def _parse_doc(obj):
 
 def extract_operations(resource):
     operations = []
-    for k, v in resource.orig.__dict__.items():
-        if callable(v) and hasattr(v, 'operation'):
-            operations.append({k: getattr(v, 'operation')})
+    for k in dir(resource.orig):
+        v = getattr(resource.orig, k)
+        if callable(v) and hasattr(v, 'swagger_operation'):
+            operations.append({k: getattr(v, 'swagger_operation')})
 
     return operations
 

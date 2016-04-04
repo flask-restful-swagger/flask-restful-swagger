@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from collections import defaultdict
 
 from flask_restful_swagger.swagger_definitions.base_swagger_definition import (
     SwaggerDefinition,
@@ -21,24 +22,22 @@ class SwaggerTag(SwaggerDefinition):
 
 
 class SwaggerResource(SwaggerDefinition):
-    def __init__(self, resource, url=None):
+    def __init__(self, resource, *urls):
         self.orig = resource
-        self.url = url
-        self.swagger_url = extract_swagger_path(url)
-        self.listing_path = '/' + url.split('/')[1]
+        self.operations = defaultdict(dict)
+        self.urls = urls
 
     @staticmethod
     def _render_operations(operations):
         result = {}
-        for operation in operations:
-            for k, v in operation.items():
-                result[k] = v.render()
+        for k, v in operations.items():
+            result[k] = v.render()
 
         return result
 
     def render(self):
-        operations = extract_operations(self)
-        result = dict({
-            self.url: self._render_operations(operations),
-        })
+        result = {}
+        for url in self.urls:
+            operations = extract_operations(self, url)
+            result[url] = self._render_operations(operations)
         return result

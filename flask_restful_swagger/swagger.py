@@ -4,7 +4,7 @@ from __future__ import absolute_import
 
 import importlib
 import os
-from collections import OrderedDict
+from collections import OrderedDict, defaultdict
 
 import six
 from flask import Blueprint
@@ -136,12 +136,12 @@ class SwaggerDocs(object):
 
         self.app.register_blueprint(self.blueprint)
 
-    def add_resource(self, resource, url, **kwargs):
-        # TODO: multiple url support?
-        swagger_resource = self.definitions.SwaggerResource(resource, url=url)
+    def add_resource(self, resource, *urls, **kwargs):
+        swagger_resource = self.definitions.SwaggerResource(resource, *urls)
 
-        self.api.add_resource(resource, url, **kwargs)
+        self.api.add_resource(resource, *urls, **kwargs)
         self.resources.update({resource.endpoint: swagger_resource})
+        return swagger_resource
 
     def add_tag(self, name, order, description, **kwargs):
         self.tags.update({order: self.definitions.SwaggerTag(name, order, description)})
@@ -156,8 +156,15 @@ class SwaggerDocs(object):
     def operation(self, *args, **kwargs):
         def _inner(func):
             operation = self.definitions.SwaggerOperation(*args, **kwargs)
-            func.swagger_operation = operation
-            func.operation = operation
+            if 'resource' in kwargs.keys():
+                resource = kwargs['resource']
+                if not isinstance(resource, self.definitions.SwaggerResource):
+                    raise ValueError(
+                        "Provided `resource` object is not flask-restful-swagger's Resource")
+                url = kwargs['url']
+                resource.operations[url].update({func.__name__:operation})
+            else:
+                func.swagger_operation = operation
             return func
 
         return _inner

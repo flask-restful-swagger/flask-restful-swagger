@@ -53,12 +53,13 @@ def _parse_doc(obj):
     return first_line, other_lines
 
 
-def extract_operations(resource):
-    operations = []
+def extract_operations(resource, url):
+    operations = resource.operations[url]
+
     for k in dir(resource.orig):
         v = getattr(resource.orig, k)
         if callable(v) and hasattr(v, 'swagger_operation'):
-            operations.append({k: getattr(v, 'swagger_operation')})
+            operations.update({k: getattr(v, 'swagger_operation')})
 
     return operations
 

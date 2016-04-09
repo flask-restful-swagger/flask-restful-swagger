@@ -4,11 +4,11 @@ from __future__ import absolute_import
 
 import importlib
 import os
-from collections import OrderedDict, defaultdict
+from collections import OrderedDict
 
-import six
 from flask import Blueprint
 from flask_restful import Api
+
 from flask_restful_swagger import swagger_definitions
 from flask_restful_swagger.producers import (
     JsonResourceListingProducer,
@@ -54,8 +54,9 @@ class SwaggerDocs(object):
 
     @staticmethod
     def _set_default_values(values, defaults_values):
-        for k, v in six.iteritems(defaults_values):
-            values.setdefault(k, v)
+        results = defaults_values.copy()
+        results.update(values)
+        return results
 
     def __init__(self, api, swagger_meta=None, swagger_listing_meta=None,
                  api_spec_url='/api/spec', template_folder=None,
@@ -65,18 +66,16 @@ class SwaggerDocs(object):
                 "Provided `api` object is not flask-restful's Api")
 
         self.api = api
-        self.swagger_meta = swagger_meta
-        self._set_default_values(self.swagger_meta, DEFAULTS_META_VALUES)
-        self.swagger_listing_meta = swagger_listing_meta
-        self._set_default_values(self.swagger_listing_meta, DEFAULTS_LISTING_META_VALUES)
+        self.swagger_meta = self._set_default_values(swagger_meta, DEFAULTS_META_VALUES)
+        self.swagger_listing_meta = self._set_default_values(swagger_listing_meta, DEFAULTS_LISTING_META_VALUES)
 
         self.definitions = None
         # This will set `self.definitions` to the appropriate module:
-        swagger_version = swagger_listing_meta.pop('swagger', None)
+        swagger_version = self.swagger_listing_meta.pop('swagger', None)
         if swagger_version:
-            swagger_listing_meta.pop('swaggerVersion', None)
+            self.swagger_listing_meta.pop('swaggerVersion', None)
         else:
-            swagger_version = swagger_listing_meta.pop('swaggerVersion', None)
+            swagger_version = self.swagger_listing_meta.pop('swaggerVersion', None)
         self._import_required_version(swagger_version)
         self.swagger_meta = self.definitions.SwaggerMeta()
         self.swagger_listing_meta = self.definitions.SwaggerListingMeta(
@@ -162,7 +161,7 @@ class SwaggerDocs(object):
                     raise ValueError(
                         "Provided `resource` object is not flask-restful-swagger's Resource")
                 url = kwargs['url']
-                resource.operations[url].update({func.__name__:operation})
+                resource.operations[url].update({func.__name__: operation})
             else:
                 func.swagger_operation = operation
             return func

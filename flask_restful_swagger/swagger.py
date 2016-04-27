@@ -71,11 +71,11 @@ class SwaggerDocs(object):
 
         self.definitions = None
         # This will set `self.definitions` to the appropriate module:
-        swagger_version = self.swagger_listing_meta.pop('swagger', None)
+        swagger_version = self.swagger_listing_meta.get('swagger')
         if swagger_version:
-            self.swagger_listing_meta.pop('swaggerVersion', None)
+            self.swagger_listing_meta.pop('swaggerVersion')
         else:
-            swagger_version = self.swagger_listing_meta.pop('swaggerVersion', None)
+            swagger_version = self.swagger_listing_meta.get('swaggerVersion')
         self._import_required_version(swagger_version)
         self.swagger_meta = self.definitions.SwaggerMeta()
         self.swagger_listing_meta = self.definitions.SwaggerListingMeta(

@@ -37,8 +37,11 @@ setup(
         'Flask-RESTful>=0.2.12',
         'six>=1.10.0',
     ],
+    setup_requires=[
+        'pytest-runner',
+    ],
     tests_require=[
-        'pytest>=2.9.0'
+        'pytest>=2.9.0',
     ],
     classifiers=[
         'Development Status :: 1 - Planing',

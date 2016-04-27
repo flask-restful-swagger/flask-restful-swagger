@@ -171,5 +171,4 @@ crashlytics-build.properties
 .mr.developer.cfg
 .project
 .pydevproject
-
-
+.python-version

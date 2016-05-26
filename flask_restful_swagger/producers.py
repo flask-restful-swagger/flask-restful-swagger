@@ -40,7 +40,7 @@ class HtmlProducer(BaseProducer):
         if request.method == 'GET':
             json_url = request.args.get('url', None)
             if not json_url:
-                json_url = url_for('SwaggerDocs.json', _external=True)
+                json_url = url_for('SwaggerDocs.application_json', _external=True)
                 return redirect('{}?url={}'.format(
                     request.url_rule.rule, json_url))
             else:

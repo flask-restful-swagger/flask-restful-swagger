@@ -17,8 +17,7 @@ class BaseProducer(object):
         return _inner
 
     def create_endpoint(self):
-        content_type = self.__class__.content_type
-        ext = content_type.replace('/', '_')
+        ext = self.__class__.ext
 
         main_view_path = '/' + ext
         self.swagger.blueprint.add_url_rule(
@@ -31,6 +30,7 @@ class BaseProducer(object):
 
 class HtmlProducer(BaseProducer):
     content_type = 'text/html'
+    ext = 'html'
 
     def __init__(self, swagger):
         super(HtmlProducer, self).__init__()
@@ -40,7 +40,7 @@ class HtmlProducer(BaseProducer):
         if request.method == 'GET':
             json_url = request.args.get('url', None)
             if not json_url:
-                json_url = url_for('SwaggerDocs.application_json', _external=True)
+                json_url = url_for('SwaggerDocs.json', _external=True)
                 return redirect('{}?url={}'.format(
                     request.url_rule.rule, json_url))
             else:
@@ -49,6 +49,7 @@ class HtmlProducer(BaseProducer):
 
 class JsonResourceListingProducer(BaseProducer):
     content_type = 'application/json'
+    ext = 'json'
 
     def __init__(self, swagger):
         super(JsonResourceListingProducer, self).__init__()

@@ -44,11 +44,8 @@ class SwaggerDocs(object):
         """
         try:
             version_name = 'v' + version.replace('.', '_')
-            import_path = '{}.{}'.format(
-                swagger_definitions.__name__, version_name)
-            self.definitions = importlib.import_module(
-                import_path
-            )
+            import_path = '{name}.{version}'.format(name=swagger_definitions.__name__, version=version_name)
+            self.definitions = importlib.import_module(import_path)
         except ImportError as e:
             raise ValueError('No such swagger version: ' + version)
 

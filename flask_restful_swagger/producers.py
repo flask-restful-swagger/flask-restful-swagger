@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
 
-import mimetypes
-
 from flask import url_for, redirect, jsonify, request, render_template
 
 __author__ = 'sobolevn'
@@ -20,7 +18,7 @@ class BaseProducer(object):
 
     def create_endpoint(self):
         content_type = self.__class__.content_type
-        ext = mimetypes.guess_extension(content_type).replace('.', '')
+        ext = content_type.replace('/', '_')
 
         main_view_path = '/' + ext
         self.swagger.blueprint.add_url_rule(

@@ -8,10 +8,13 @@ from flask_restful_swagger.swagger import SwaggerDocs
 
 from tests.apps import config
 
+
 __author__ = 'sobolevn'
+
 
 app = Flask(__name__, static_folder='../static')
 app.config.from_object(config)
+
 
 api_listing_meta = {
     'apiVersion': '0.1',
@@ -47,22 +50,6 @@ class TodoItem(object):
 class ModelWithResourceFields(object):
     resource_fields = {
         'a_string': fields.String(),
-        'opt_integer': fields.Integer(),
-    }
-
-    swagger_metadata = {
-        'description': 'This will be shown as a desc.',
-        'properties': {
-            'a_string': {
-                'description': 'A string field.',
-            },
-            'opt_integer': {
-                'format': 'int64'
-            }
-        },
-        'required': [
-            'a_string',
-        ]
     }
 
 
@@ -85,65 +72,62 @@ class Todo(Resource):
     """
 
     @swagger.operation(
-            notes='get a todo item by ID',
-            type=ModelWithResourceFields.__name__,
-            nickname='get',
-            parameters=[{
-                "name": "todo_tag",
-                "description": "tag of pet that needs to be fetched",
-                "required": True,
-                "type": "string",
-                "paramType": "query"
-            }, ],
-            responseMessages=[
-                {
-                    "code": 400,
-                    "message": "Invalid ID supplied"
-                },
-                {
-                    "code": 404,
-                    "message": "Order not found"
-                }
-            ]
+        notes='get a todo item by ID',
+        nickname='get',
+        parameters=[{
+            "name": "todo_id",
+            "description": "ID of pet that needs to be fetched",
+            "required": True,
+            "type": "string",
+            "paramType": "path"
+        }, ],
+        responseMessages= [
+            {
+              "code": 400,
+              "message": "Invalid ID supplied"
+            },
+            {
+              "code": 404,
+              "message": "Order not found"
+            }
+          ]
     )
     def get(self, todo_id):
         """Summary"""
 
         # We expect this method to be in our specs.
         return {
-                   'todo_item': '{}{}'.format('todo', todo_id)
-               }, 200, {
-                   'Access-Control-Allow-Origin': '*',
-               }
+           'todo_item': '{}{}'.format('todo', todo_id)
+        }, 200, {
+            'Access-Control-Allow-Origin': '*',
+        }
 
     @swagger.operation(
-            notes='post a todo item by ID',
-            nickname='get',
-            parameters=[{
-                "name": "todo_id",
-                "description": "ID of pet that needs to be fetched",
-                "required": True,
-                "type": "string",
-                "paramType": "path"
-            }, ],
-            responseMessages=[
-                {
-                    "code": 400,
-                    "message": "Invalid ID supplied"
-                },
-                {
-                    "code": 404,
-                    "message": "Order not found"
-                }
-            ]
+        notes='post a todo item by ID',
+        nickname='get',
+        parameters=[{
+            "name": "todo_id",
+            "description": "ID of pet that needs to be fetched",
+            "required": True,
+            "type": "string",
+            "paramType": "path"
+        }, ],
+        responseMessages= [
+            {
+              "code": 400,
+              "message": "Invalid ID supplied"
+            },
+            {
+              "code": 404,
+              "message": "Order not found"
+            }
+          ]
     )
     def post(self, todo_id):
         return {'status': todo_id}
 
 
-swagger.add_resource(Todo, '/todo/<int:todo_id>')
-
-
+swagger.add_resource(Todo, '/todo/<string:todo_id>')
 # swagger.add_resource(MarshalWithExample, '/marshal')
 
 
@@ -151,7 +135,6 @@ swagger.add_resource(Todo, '/todo/<int:todo_id>')
 def test():
     s = app
     return 'Done'
-
 
 if __name__ == '__main__':
     app.run(debug=True)

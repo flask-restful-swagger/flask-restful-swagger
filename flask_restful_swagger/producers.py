@@ -53,7 +53,7 @@ class JsonResourceListingProducer(BaseProducer):
 
     def get(self, *args, **kwargs):
         meta = self.swagger.swagger_listing_meta.render(
-            resources=self.swagger.resources, tags=self.swagger.tags)
+            resources=self.swagger.resources)
         return jsonify(meta)
 
 

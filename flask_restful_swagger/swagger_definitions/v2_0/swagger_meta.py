@@ -16,13 +16,13 @@ class SwaggerListingMeta(dict, SwaggerDefinition):
             result['paths'].update(r.render())
 
         result['tags'] = []
-        for r in tags.values():
-            result['tags'].append(r.render())
-        return result
+        if hasattr(tags, 'values'):
+            for r in tags.values():
+                result['tags'].append(r.render())
 
         return result
 
 
 class SwaggerMeta(dict, SwaggerDefinition):
-    def render(self, resource):
+    def render(self, resource, models):
         return resource.render()

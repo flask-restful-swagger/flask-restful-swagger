@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 
 import functools
-import inspect
-import re
 import warnings
+import re
+import inspect
 
 __author__ = 'sobolevn'
 
@@ -19,10 +19,10 @@ def deprecated(func):
     @functools.wraps(func)
     def new_func(*args, **kwargs):
         warnings.warn_explicit(
-            "Call to deprecated function {}.".format(func.__name__),
-            category=DeprecationWarning,
-            filename=func.func_code.co_filename,
-            lineno=func.func_code.co_firstlineno + 1,
+                "Call to deprecated function {}.".format(func.__name__),
+                category=DeprecationWarning,
+                filename=func.func_code.co_filename,
+                lineno=func.func_code.co_firstlineno + 1,
         )
         return func(*args, **kwargs)
 
@@ -51,17 +51,6 @@ def _parse_doc(obj):
             first_line = full_doc
 
     return first_line, other_lines
-
-
-def extract_operations(resource, url):
-    operations = resource.operations[url]
-
-    for k in dir(resource.orig):
-        v = getattr(resource.orig, k)
-        if callable(v) and hasattr(v, 'swagger_operation'):
-            operations.update({k: getattr(v, 'swagger_operation')})
-
-    return operations
 
 
 def extract_swagger_path(path):

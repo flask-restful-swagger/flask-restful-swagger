@@ -10,6 +10,13 @@ from flask_restful_swagger.utils import (
 __author__ = 'sobolevn'
 
 
+class SwaggerTag(SwaggerDefinition):
+    def __init__(self, tagsList):
+        self.contents = tagsList  #store all tags for particular resource class
+
+    def render(self):
+        return self.contents
+
 class SwaggerResource(SwaggerDefinition):
     def __init__(self, resource, url=None):
         self.orig = resource
@@ -25,8 +32,9 @@ class SwaggerResource(SwaggerDefinition):
 
     def _extract_operations(self):
         operations = []
-        #here we extracting method names from a class that we passed to swagger as resource (at add_resource method)
-        for k, v in self.orig.__dict__.items():
+        #extracting method names from a class that we passed to swagger as resource (at add_resource method)
+        for k in dir(self.orig):
+            v = getattr(self.orig, k)
             if callable(v) and hasattr(v, 'operation'): #parsing only methods marked with decorator @swagger.operation
                 operation = getattr(v, 'operation')
                 args = operation.extract_path_arguments(self.url)
@@ -35,26 +43,22 @@ class SwaggerResource(SwaggerDefinition):
 
         return operations
 
-    def _render_operations(self, operations):
+    @staticmethod
+    def _render_operations(operations):
         result = {}
         for operation in operations:
             for k, v in operation.items():
-                rendered = v.render()
-                #rendered.update({'method': k})
-                result.update({k: rendered})
-
+                result[k] = v.render()
         return result
 
     def render(self, models=None):
         operations = self._extract_operations()
-        result = self.orig.swagger_attr
+#        result = self.orig.swagger_attr
+        result = {}
+        result[self.swagger_url] = self._render_operations(operations)
 
-        path = self._render_operations(operations)
-
-        result = {self.swagger_url: path}
-
-        if models:
-            result['models'] = {k: v.render() for k, v in models.items()}
+#        if models:
+#            result['models'] = {k: v.render() for k, v in models.items()}
 
         return result
 

@@ -18,7 +18,7 @@ app.config.from_object(config)
 
 api_listing_meta = {
     'apiVersion': '0.1',
-    'swaggerVersion': '2.0',
+    'swaggerVersion': '1.2',
     'info': {
         "title": "Swagger Sample App",
         "description": "This is a sample server Petstore server.",
@@ -26,7 +26,15 @@ api_listing_meta = {
         "contact": "apiteam@wordnik.com",
         "license": "Apache 2.0",
         "licenseUrl": "http://www.apache.org/licenses/LICENSE-2.0.html"
-    }
+    },
+    'apiVersion': '0.1',
+    'resourcePath': '/',
+    'produces': [
+            'application/json',
+            'text/html',
+    ],
+    'api_spec_url': '/api/spec',
+    'description': 'A Basic API',
 }
 
 api_meta = {
@@ -130,11 +138,6 @@ class Todo(Resource):
 swagger.add_resource(Todo, '/todo/<string:todo_id>')
 # swagger.add_resource(MarshalWithExample, '/marshal')
 
-
-@app.route('/test')
-def test():
-    s = app
-    return 'Done'
 
 if __name__ == '__main__':
     app.run(debug=True)

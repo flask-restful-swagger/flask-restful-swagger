@@ -7,6 +7,7 @@ import os
 import mimetypes
 import importlib
 
+
 from flask import Blueprint
 from flask_restful import Api
 
@@ -21,6 +22,19 @@ from flask_restful_swagger import swagger_definitions
 
 __author__ = 'sobolevn'
 
+DEFAULTS_META_VALUES = {
+ }
+
+DEFAULTS_LISTING_META_VALUES = {
+    'swaggerVersion': '2.0',
+    'info': {
+        "license": {
+            "name": "Apache 2.0",
+            "url": "http://www.apache.org/licenses/LICENSE-2.0.html"
+        },
+        "version": "1.0.1"
+    }
+}
 
 class SwaggerDocs(object):
     _known_producers = [
@@ -48,15 +62,10 @@ class SwaggerDocs(object):
         except ImportError:
             raise ValueError('No such swagger version: ' + version)
 
-    def _set_default_meta_values(self, values):
-        defaults_values = {
-            'apiVersion': '0.0.1',
-            'swaggerVersion': '1.2',
-        }
-
+    @staticmethod
+    def _set_default_meta_values(values, defaults_values):
         for k, v in six.iteritems(defaults_values):
-            if k not in values or not values[k]:
-                values[k] = v
+            values.setdefault(k, v)
 
     def __init__(self, api, swagger_meta=None, swagger_listing_meta=None,
                  api_spec_url='/api/spec', template_folder=None,
@@ -66,16 +75,22 @@ class SwaggerDocs(object):
                 "Provided `api` object is not flask-restful's Api")
 
         self.api = api
-        self.swagger_meta = swagger_meta
-        self.swagger_listing_meta = swagger_listing_meta
-        self._set_default_meta_values(self.swagger_listing_meta)
-        self._set_default_meta_values(self.swagger_meta)
+
+        self._set_default_meta_values(swagger_listing_meta, DEFAULTS_LISTING_META_VALUES)
+        self._set_default_meta_values(swagger_meta, DEFAULTS_META_VALUES)
+        self.swagger_meta = swagger_meta.copy()
+        self.swagger_listing_meta = swagger_listing_meta.copy()
+        # we have to check 2 different tags because in swagger 2.0 tag has changed to 'swagger'
+        swagger_version = swagger_listing_meta.get('swagger', swagger_listing_meta.get('swaggerVersion'))
+
 
         self.definitions = None
+
+
+
         # This will set `self.definitions` to the appropriate module:
-        self._import_required_version(
-            swagger_listing_meta['swaggerVersion'])
-        self.swagger_meta = self.definitions.SwaggerMeta()
+        self._import_required_version(swagger_version)
+        self.swagger_meta = self.definitions.SwaggerMeta(self.swagger_meta)
         self.swagger_listing_meta = self.definitions.SwaggerListingMeta(
             self.swagger_listing_meta
         )
@@ -85,6 +100,8 @@ class SwaggerDocs(object):
         self.operations = []
         self.models = {}
         self.resources = {}
+        self.tags = []
+
 
         self.api_spec_url = api_spec_url
         self.static_url_path = static_url_path or ''
@@ -139,9 +156,9 @@ class SwaggerDocs(object):
         self.api.add_resource(resource, url, **kwargs)
         self.resources.update({resource.endpoint: swagger_resource})
 
-    def resource(self, **kwargs):
+    def resource(self, tags=None):
         def _inner(resource_class):
-            resource_class.swagger_attr = kwargs
+            self.tags.append(self.definitions.SwaggerTag(tags))
             return resource_class
         return _inner
 

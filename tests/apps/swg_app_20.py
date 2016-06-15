@@ -14,8 +14,7 @@ app = Flask(__name__, static_folder='../static')
 app.config.from_object(config)
 
 api_listing_meta = {
-#    'apiVersion': '1.0',
-    'swaggerVersion': '2.0',
+    'swagger': '2.0',
     'info': {
           "title": "Swagger Sample App",
           "description": "This is a sample todo items application.",
@@ -30,7 +29,7 @@ api_listing_meta = {
             "url": "http://www.apache.org/licenses/LICENSE-2.0.html"
           },
           "version": "1.0.1"
-        }
+        },
 }
 
 api_meta = {
@@ -73,18 +72,20 @@ class ModelWithResourceFields(object):
     }
 
 
-todo_meta = {
-#    "basePath": "http://127.0.0.1:5000",
-#    "resourcePath": "/todo",
-#    "produces": [
-#        "application/json"
-#    ],
-#    "authorizations": {},
-#    'description': 'short desc',
-}
+todo_tags = [
+        {
+            "name": "todo",
+            "description": "Everything about your Pets",
+            "externalDocs": {
+                "description": "Find out more",
+                "url": "http://swagger.io"
+            }
+    },
+]
 
 
-@swagger.resource(**todo_meta)
+
+@swagger.resource(tags=todo_tags)
 class Todo(Resource):
     """
     Todo-Description
@@ -92,6 +93,7 @@ class Todo(Resource):
     """
 
     @swagger.operation(
+            tags= ["todo"],
             summary='get a todo item by ID',
 #            type=ModelWithResourceFields.__name__,
             operationId='getTodoItem',
@@ -146,6 +148,7 @@ class Todo(Resource):
                }
 
     @swagger.operation(
+            tags=["todo"],
             summary='create a new todo item',
             operationId='postTodoItem',
             parameters=[

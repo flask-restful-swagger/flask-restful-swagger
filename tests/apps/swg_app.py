@@ -1,8 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from flask import Flask
-from flask.ext.restful import Api, fields
-from flask_restful import Resource
+from flask_restful import Resource, Api, fields
 
 from flask_restful_swagger.swagger import SwaggerDocs
 

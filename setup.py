@@ -42,6 +42,7 @@ setup(
     ],
     tests_require=[
         'pytest>=2.9.0',
+        'jsonschema',
     ],
     classifiers=[
         'Development Status :: 1 - Planing',

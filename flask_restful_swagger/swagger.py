@@ -6,6 +6,7 @@ import six
 import os
 import mimetypes
 import importlib
+import functools
 
 
 from flask import Blueprint
@@ -26,7 +27,7 @@ DEFAULTS_META_VALUES = {
  }
 
 DEFAULTS_LISTING_META_VALUES = {
-    'swaggerVersion': '2.0',
+#    'swagger': '2.0',
     'info': {
         "license": {
             "name": "Apache 2.0",
@@ -37,12 +38,6 @@ DEFAULTS_LISTING_META_VALUES = {
 }
 
 class SwaggerDocs(object):
-    _known_producers = [
-        JsonResourceListingProducer,
-        JsonResourceProducer,
-        HtmlProducer,
-    ]
-
     def _import_required_version(self, version):
         """
         This method is used to dynamically import the required swagger
@@ -95,7 +90,6 @@ class SwaggerDocs(object):
             self.swagger_listing_meta
         )
 
-        self._detect_producers(self.swagger_meta)
 
         self.operations = []
         self.models = {}
@@ -142,11 +136,8 @@ class SwaggerDocs(object):
             template_folder=self.template_folder,
             static_url_path=self.static_url_path,
         )
-
-        # TODO: move url creation inside the producers!
-        for producer_class in self.produces:
-            producer_class(self).create_endpoint()
-
+        #this also includes creation of endpoints for producers
+        self.produces = BaseProducer.detect_producers(self.swagger_meta, self)
         self.app.register_blueprint(self.blueprint)
 
     def add_resource(self, resource, url, **kwargs):
@@ -156,9 +147,11 @@ class SwaggerDocs(object):
         self.api.add_resource(resource, url, **kwargs)
         self.resources.update({resource.endpoint: swagger_resource})
 
-    def resource(self, tags=None):
+    def resource(self, tags=None, **kwargs):
         def _inner(resource_class):
-            self.tags.append(self.definitions.SwaggerTag(tags))
+            resource_class.swagger_attr = kwargs
+            if tags:
+                self.tags.append(self.definitions.SwaggerTag(tags))
             return resource_class
         return _inner
 
@@ -170,29 +163,24 @@ class SwaggerDocs(object):
             return func
         return _inner
 
-    def model(self, obj):
-        def _inner(*args, **kwargs):
-            return obj(*args, **kwargs)
-
+    def model(self, obj=None):
         self.models.update({
             obj.__name__: self.definitions.SwaggerModel(obj)
         })
-        _inner.__name__ = obj.__name__
-        return _inner
+        return obj
 
-    def _detect_producers(self, produces):
-        if not produces:
-            self.produces = self.__class__._known_producers
+    def nested(self, klass=None, **kwargs):
+        if klass:
+            ret = self.definitions.SwaggerNestedModel(klass)
+            functools.update_wrapper(ret, klass)
         else:
-            self.produces = []
-            for wanted_producer in produces:
-                if wanted_producer in self.produces:
-                    continue
+            def wrapper(klass):
+                wrapped = self.definitions.SwaggerNestedModel(klass, **kwargs)
+                functools.update_wrapper(wrapped, klass)
+                return wrapped
 
-                if issubclass(wanted_producer, BaseProducer):
-                    self.produces.append(wanted_producer)
-                    continue
+            ret = wrapper
+        return ret
 
-                for producer in self.__class__._known_producers:
-                    if producer.content_type == wanted_producer:
-                        self.produces.append(producer)
+
+

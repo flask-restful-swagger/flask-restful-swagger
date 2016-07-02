@@ -34,32 +34,35 @@ class SwaggerModel(SwaggerDefinition):
         if predicate(obj, cls.all_types()):
             return {'type': cls.deduce_swagger_type_flat(obj)}
 
-        # TODO:
-        # if predicate(obj, (fields.List, )):
-        #     if inspect.isclass(obj):
-        #         return {'type': 'array'}
-        #     else:
-        #         return {
-        #             'type': 'array',
-        #             'items': {
-        #                 '$ref': cls.deduce_swagger_type_flat(
-        #                         obj.container, nested_type)
-        #             }
-        #         }
-        #
-        # if predicate(obj, (fields.Nested, )):
-        #     return {'type': nested_type}
+        if predicate(obj, (fields.List, )):
+             if inspect.isclass(obj):
+                 return {'type': 'array'}
+             else:
+                 return {
+                     'type': 'array',
+                     'items': {
+                         '$ref': "#/definitions/" + cls.deduce_swagger_type_flat(
+                                 obj.container, nested_type)
+                     }
+                 }
+
+        if predicate(obj, (fields.Nested, )):
+            return {'$ref': "#/definitions/" + cls.deduce_swagger_type_flat(
+                                 obj, nested_type)}
 
         return {'type': 'null'}
 
     @classmethod
     def deduce_swagger_type_flat(cls, obj, nested_type=None):
+        if nested_type:
+            return nested_type
+
         mapping = [
             ('string', cls.STRING),
             ('integer', cls.INTEGER),
             ('number', cls.NUMBER),
             ('boolean', cls.BOOLEAN),
-            ('date-time', cls.DATETIME),
+            ('date-time', cls.DATETIME), #TODO: this type is not supported by swagger JSON schema!
         ]
 
         predicate = cls.predicate(obj)
@@ -80,16 +83,13 @@ class SwaggerModel(SwaggerDefinition):
     def _parse_resource_fields(self):
         resource_fields = self.model_class.resource_fields
 
-        try:  # trying to parse `required` field at first:
-            required = set(self.model_class.required)
-        except AttributeError:
-            required = []  # there's no required field provided.
+        is_nested = isinstance(self.model_class, SwaggerNestedModel)
+        nested = self.model_class.nested() if is_nested else {}
 
         properties = {}
         for name, field in resource_fields.items():
-            values = self.deduce_swagger_type(field)
-            if name in required:
-                values.update({'required': True})
+            nested_type = nested[name] if name in nested else None
+            values = self.deduce_swagger_type(field, nested_type)
             properties[name] = values
 
         return properties
@@ -111,7 +111,7 @@ class SwaggerModel(SwaggerDefinition):
 
     def _construct_swagger_model(self):
         result = {
-            'id': self.model_class.__name__,
+            'type': 'object',
         }
 
         try:
@@ -122,7 +122,7 @@ class SwaggerModel(SwaggerDefinition):
             properties = self._parse_constructor()
         except Exception:
             # This model is not valid, `resource_fields` nor `init` provided.
-            raise AttributeError('{} model is a valid swagger model.'.format(
+            raise AttributeError('{} model is not a valid swagger model.'.format(
                 self.model_class.__name__
             ))
 
@@ -144,7 +144,28 @@ class SwaggerModel(SwaggerDefinition):
 
         result['properties'] = properties
 
+        try:  # trying to parse `required` field at first:
+            required = self.model_class.required
+            result['required'] = required
+        except AttributeError:
+            required = []  # there's no required field provided.
+
         return result
 
     def render(self):
         return self.swagger_model
+
+
+class SwaggerNestedModel(object):
+    def __init__(self, klass, **kwargs):
+        self._nested = kwargs
+        self._klass = klass
+
+    def __call__(self, *args, **kwargs):
+        return self._klass(*args, **kwargs)
+
+    def nested(self):
+        return self._nested
+
+
+

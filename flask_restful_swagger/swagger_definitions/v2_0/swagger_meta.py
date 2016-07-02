@@ -7,7 +7,7 @@ __author__ = 'gdoumenc'
 
 
 class SwaggerListingMeta(dict, SwaggerDefinition):
-    def render(self, resources=None, tags=None):
+    def render(self, resources=None, tags=None, models=None):
         result = ({k: v for k, v in self.items()})
 
         result['paths'] = {}
@@ -15,12 +15,16 @@ class SwaggerListingMeta(dict, SwaggerDefinition):
             result['paths'].update(r.render())
 
         result['tags'] = []
-        for r in tags:
-            result['tags'].extend(r.render())
+        for t in tags:
+            result['tags'].extend(t.render())
+
+        if models:
+            result['definitions'] = {k: v.render() for k, v in models.items()}
+
 
         return result
 
 
 class SwaggerMeta(dict, SwaggerDefinition):
     def render(self, resource, models):
-        return resource.render()
+        return resource.render(models=models)

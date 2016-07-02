@@ -11,6 +11,30 @@ class BaseProducer(object):
     content_type = None
     swagger = None
 
+    @classmethod
+    def detect_producers(cls, produces, swagger):
+        _known_producers = cls.__subclasses__()
+        if not produces:
+            producers = _known_producers
+        else:
+            producers = []
+            for wanted_producer in produces:
+                if wanted_producer in producers:
+                    continue
+
+                if issubclass(wanted_producer, BaseProducer):
+                    producers.append(wanted_producer)
+                    continue
+
+                for producer in _known_producers:
+                    if producer.content_type == wanted_producer:
+                        producers.append(producer)
+
+        for producer_class in producers:
+            producer_class(swagger).create_endpoint()
+
+        return producers
+
     def __init__(self, swagger):
         self.swagger = swagger
 
@@ -35,6 +59,8 @@ class BaseProducer(object):
 
 
 class HtmlProducer(BaseProducer):
+    """This is wrapper for html representation. It just calls index.html from standard swagger library
+    passing JSON swagger spec as a url parameter"""
     content_type = 'text/html'
 
     def get(self, *args, **kwargs):
@@ -49,15 +75,18 @@ class HtmlProducer(BaseProducer):
 
 
 class JsonResourceListingProducer(BaseProducer):
+    """Base JSON generator. It generates full swagger specification for whole application"""
     content_type = 'application/json'
 
     def get(self, *args, **kwargs):
         meta = self.swagger.swagger_listing_meta.render(
-            resources=self.swagger.resources, tags = self.swagger.tags)
+            resources=self.swagger.resources, tags = self.swagger.tags, models=self.swagger.models)
         return jsonify(meta)
 
 
 class JsonResourceProducer(BaseProducer):
+    """JSON generator for particular resource,
+    name of resource should be passed in url like this /json/<string:resource>"""
     content_type = 'application/json'
 
     def create_endpoint(self):

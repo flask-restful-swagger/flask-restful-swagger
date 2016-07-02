@@ -57,8 +57,8 @@ class SwaggerResource(SwaggerDefinition):
         result = {}
         result[self.swagger_url] = self._render_operations(operations)
 
-#        if models:
-#            result['models'] = {k: v.render() for k, v in models.items()}
+        if models:
+            result['definitions'] = {k: v.render() for k, v in models.items()}
 
         return result
 

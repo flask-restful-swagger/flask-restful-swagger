@@ -8,7 +8,7 @@ __author__ = 'sobolevn'
 
 
 class SwaggerListingMeta(dict, SwaggerDefinition):
-    def render(self, resources=None, tags=None):
+    def render(self, resources=None, tags=None, models=None):
         result = {k: v for k, v in self.items()}
         result['apis'] = []
         for r in resources.values():

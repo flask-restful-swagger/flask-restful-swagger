@@ -4,7 +4,7 @@ import unittest
 
 from flask import url_for
 
-from tests.apps import basic_app
+from tests.apps import swg_app_20
 
 __author__ = 'sobolevn'
 
